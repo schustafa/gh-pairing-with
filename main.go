@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -21,6 +20,16 @@ type userQuery struct {
 }
 
 func main() {
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
+		fmt.Printf(`
+Usage:
+  pairing-with <github-login>
+`)
+		return
+	}
+
 	if err := cli(); err != nil {
 		fmt.Fprintf(os.Stderr, "gh-pairing-with failed: %s\n", err.Error())
 		os.Exit(1)
@@ -28,12 +37,6 @@ func main() {
 }
 
 func cli() error {
-	flag.Parse()
-
-	if len(flag.Args()) < 1 {
-		return errors.New("login required")
-	}
-
 	login := strings.ToLower(strings.Join(flag.Args(), " "))
 
 	terminal := term.FromEnv()
