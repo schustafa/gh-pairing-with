@@ -1,26 +1,73 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/term"
+	graphql "github.com/cli/shurcooL-graphql"
 )
 
-func main() {
-	fmt.Println("hi world, this is the gh-pairing-with extension!")
-	client, err := api.DefaultRESTClient()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	response := struct {Login string}{}
-	err = client.Get("user", &response)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("running as %s\n", response.Login)
+type userQuery struct {
+	User struct {
+		Name       graphql.String
+		Email      graphql.String
+		DatabaseID graphql.Int
+	} `graphql:"user(login: $login)"`
 }
 
-// For more examples of using go-gh, see:
-// https://github.com/cli/go-gh/blob/trunk/example_gh_test.go
+func main() {
+	if err := cli(); err != nil {
+		fmt.Fprintf(os.Stderr, "gh-pairing-with failed: %s\n", err.Error())
+		os.Exit(1)
+	}
+}
+
+func cli() error {
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
+		return errors.New("login required")
+	}
+
+	login := strings.ToLower(strings.Join(flag.Args(), " "))
+
+	terminal := term.FromEnv()
+	if terminal.IsTerminalOutput() {
+		fmt.Printf("looking for user %s\n", login)
+	}
+
+	client, err := api.DefaultGraphQLClient()
+	if err != nil {
+		return fmt.Errorf("could not make graphql client: %w", err)
+	}
+
+	variables := map[string]interface{}{
+		"login": graphql.String(login),
+	}
+
+	var query userQuery
+
+	err = client.Query("UserSearch", &query, variables)
+	if err != nil {
+		return fmt.Errorf("API call failed: %w", err)
+	}
+
+	coauthoredName := fmt.Sprintf("%s", query.User.Name)
+	if coauthoredName == "" {
+		coauthoredName = login
+	}
+
+	coauthoredEmail := fmt.Sprintf("%s", query.User.Email)
+	if coauthoredEmail == "" {
+		coauthoredEmail = fmt.Sprintf("%d+%s@users.noreply.github.com", query.User.DatabaseID, login)
+	}
+
+	fmt.Printf("Co-authored-by: %s <%s>\n", coauthoredName, coauthoredEmail)
+
+	return nil
+}
