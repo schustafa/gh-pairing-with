@@ -13,6 +13,7 @@ def parse_pairing_handles(commit_msg)
   match.flatten.each do |substring|
     substring.split do |word|
       next unless word.start_with?("@")
+      word.gsub!(/^@/, "")
       word.gsub!(/[,;.]$/i, "")
       pairs << word unless pairs.include?(word)
     end

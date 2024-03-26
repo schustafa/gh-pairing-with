@@ -1,5 +1,5 @@
 require "minitest/autorun"
-require "../commit_msg_pairs"
+require_relative "../commit_msg_pairs"
 
 class PairingTest < MiniTest::Test
   def test_nobody_pairing
@@ -15,7 +15,7 @@ class PairingTest < MiniTest::Test
     MSG
 
     assert_equal 1, parse_pairing_handles(message).length
-    assert_equal ["@eeyore"], parse_pairing_handles(message)
+    assert_equal ["eeyore"], parse_pairing_handles(message)
   end
 
   def test_two_pairs_on_two_lines
@@ -26,7 +26,7 @@ class PairingTest < MiniTest::Test
     Pairing with @tigger.
     MSG
     assert_equal 2, parse_pairing_handles(message).length
-    assert_equal ["@pooh", "@tigger"], parse_pairing_handles(message)
+    assert_equal ["pooh", "tigger"], parse_pairing_handles(message)
   end
 
   def test_many_pairs_on_one_line
@@ -37,6 +37,6 @@ class PairingTest < MiniTest::Test
     MSG
 
     assert_equal 3, parse_pairing_handles(message).length
-    assert_equal ["@pooh", "@tigger", "@piglet"], parse_pairing_handles(message)
+    assert_equal ["pooh", "tigger", "piglet"], parse_pairing_handles(message)
   end
 end
