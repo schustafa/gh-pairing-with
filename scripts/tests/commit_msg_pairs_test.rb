@@ -39,4 +39,22 @@ class PairingTest < MiniTest::Test
     assert_equal 3, parse_pairing_handles(message).length
     assert_equal ["pooh", "tigger", "piglet"], parse_pairing_handles(message)
   end
+
+  def test_when_you_are_really_excited
+    message = <<-MSG
+    It finally worked! Pairing with @christoph3rr0bin!
+    MSG
+
+    assert_equal 1, parse_pairing_handles(message).length
+    assert_equal ["christoph3rr0bin"], parse_pairing_handles(message)
+  end
+
+  def test_when_you_are_not_sure_what_just_happened
+    message = <<-MSG
+    Is this it? Pairing with @roo?
+    MSG
+
+    assert_equal 1, parse_pairing_handles(message).length
+    assert_equal ["roo"], parse_pairing_handles(message)
+  end
 end

@@ -14,7 +14,7 @@ def parse_pairing_handles(commit_msg)
     substring.split do |word|
       next unless word.start_with?("@")
       word.gsub!(/^@/, "")
-      word.gsub!(/[,;.]$/i, "")
+      word.gsub!(/[,;.!?]$/i, "")
       pairs << word unless pairs.include?(word)
     end
   end
