@@ -1,7 +1,7 @@
 require "minitest/autorun"
 require_relative "../commit_msg_pairs"
 
-class PairingTest < MiniTest::Test
+class PairingTest < Minitest::Test
   def test_nobody_pairing
     message = "This is a regular commit message"
     assert_pairs [], message
