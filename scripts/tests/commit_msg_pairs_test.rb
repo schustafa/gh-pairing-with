@@ -4,7 +4,7 @@ require_relative "../commit_msg_pairs"
 class PairingTest < MiniTest::Test
   def test_nobody_pairing
     message = "This is a regular commit message"
-    assert_empty parse_pairing_handles(message)
+    assert_pairs [], message
   end
 
   def test_one_pair
@@ -14,8 +14,7 @@ class PairingTest < MiniTest::Test
     Pairing with @eeyore.
     MSG
 
-    assert_equal 1, parse_pairing_handles(message).length
-    assert_equal ["eeyore"], parse_pairing_handles(message)
+    assert_pairs ["eeyore"], message
   end
 
   def test_two_pairs_on_two_lines
@@ -25,8 +24,8 @@ class PairingTest < MiniTest::Test
     Pairing with @pooh.
     Pairing with @tigger.
     MSG
-    assert_equal 2, parse_pairing_handles(message).length
-    assert_equal ["pooh", "tigger"], parse_pairing_handles(message)
+
+    assert_pairs ["pooh", "tigger"], message
   end
 
   def test_many_pairs_on_one_line
@@ -36,8 +35,7 @@ class PairingTest < MiniTest::Test
     @eeyore didn't help at all.
     MSG
 
-    assert_equal 3, parse_pairing_handles(message).length
-    assert_equal ["pooh", "tigger", "piglet"], parse_pairing_handles(message)
+    assert_pairs ["pooh", "tigger", "piglet"], message
   end
 
   def test_when_you_are_really_excited
@@ -45,8 +43,7 @@ class PairingTest < MiniTest::Test
     It finally worked! Pairing with @christoph3rr0bin!
     MSG
 
-    assert_equal 1, parse_pairing_handles(message).length
-    assert_equal ["christoph3rr0bin"], parse_pairing_handles(message)
+    assert_pairs ["christoph3rr0bin"], message
   end
 
   def test_when_you_are_not_sure_what_just_happened
@@ -54,7 +51,39 @@ class PairingTest < MiniTest::Test
     Is this it? Pairing with @roo?
     MSG
 
-    assert_equal 1, parse_pairing_handles(message).length
-    assert_equal ["roo"], parse_pairing_handles(message)
+    assert_pairs ["roo"], message
+  end
+
+  def test_no_punctuation
+    message = <<-MSG
+    fixed it. pairing with @owl
+    MSG
+
+    assert_pairs ["owl"], message
+  end
+
+  def test_with_a_colon
+    message = <<-MSG
+    fixed it. pairing with: @owl, @roo, @eeyore
+    MSG
+
+    assert_pairs ["owl", "roo", "eeyore"], message
+  end
+
+  def test_other_wordings
+    wordings = ["collaborating with", "working with"]
+    wordings.each do |wording|
+      message = <<-MSG
+      fixed! #{wording} @owl.
+      MSG
+
+      assert_pairs ["owl"], message
+    end
+  end
+
+  def assert_pairs(expected_pairs, message)
+    result = parse_pairing_handles(message)
+    assert_equal expected_pairs.length, result.length
+    assert_equal expected_pairs, result
   end
 end

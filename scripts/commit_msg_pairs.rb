@@ -1,10 +1,11 @@
 def parse_pairing_handles(commit_msg)
-  # Valid pairing formats
-  # * pairing with @username
-  # * Pairing with @username, @username2, and @username3
-  # * pairing with @username and @username2
+  descriptors = [
+    "pairing with",
+    "collaborating with",
+    "working with"
+  ]
 
-  regex = /pairing with (@[^.\r\n]*)/i
+  regex = /(?:#{descriptors.join("|")}):? (@[^.\r\n]*)/i
   match = commit_msg.scan(regex)
 
   return [] unless match
