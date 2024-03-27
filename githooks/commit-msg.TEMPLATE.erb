@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+<%= File.read(File.expand_path("scripts/commit_msg_pairs.rb")) %>
+
+# Cross-platform way of finding an executable in the $PATH.
+# https://stackoverflow.com/a/5471032 (thx mislav)
+#   which('ruby') #=> /usr/bin/ruby
+def which(cmd)
+  exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
+  ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+    exts.each do |ext|
+      exe = File.join(path, "#{cmd}#{ext}")
+      return exe if File.executable?(exe) && !File.directory?(exe)
+    end
+  end
+  nil
+end
+
+message_file = ARGV[0]
+message = File.read(message_file)
+
+handles = parse_pairing_handles(message)
+
+exit 0 if handles.empty?
+
+gh_installed = which("gh")
+
+if !gh_installed
+  puts "GitHub CLI is not installed."
+  exit 0
+end
+
+pairing_with_extension_installed = `gh extensions list | grep pairing-with`.length > 0
+
+if !pairing_with_extension_installed
+  puts "The pairing-with extension for GitHub CLI is not installed."
+  exit 0
+end
+
+coauthored_by_strings = []
+
+handles.each do |handle|
+  coauthored_by_strings << `gh pairing-with #{handle}`.strip
+end
+
+File.write(message_file, "\n#{coauthored_by_strings.join("\n")}", mode: "a+")
