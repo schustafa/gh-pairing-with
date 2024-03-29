@@ -8,8 +8,10 @@ Rake::TestTask.new do |task|
   task.options = "--pride"
 end
 
-desc "Generate the commit-msg hook and verify its syntax"
-file "generate-hook" do
-  sh "erb githooks/commit-msg.TEMPLATE.erb > githooks/commit-msg"
+file "githooks/commit-msg" do
+  sh "erb githooks/commit-msg.TEMPLATE.erb > githooks/commit-msg && chmod +x githooks/commit-msg"
   ruby "-c githooks/commit-msg"
 end
+
+desc "Generate the commit-msg hook and verify its syntax"
+task generate_hook: %w[githooks/commit-msg]
