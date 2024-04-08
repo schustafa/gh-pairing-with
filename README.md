@@ -69,6 +69,14 @@ You can add those scopes to your `gh` token by running the following:
 gh auth refresh --scopes user:email,read:user
 ```
 
+### Formatting
+
+Did you copy+paste your co-authored string(s) but it ended up as part of your commit message without giving any credit? Make sure you're including an empty line in between your commit message and co-authored string(s) like this:
+
+<img width="378" alt="Screenshot 2024-03-31 at 10 17 01 PM" src="https://github.com/schustafa/gh-pairing-with/assets/6415144/bb7319ff-13d2-4031-a656-e12e236fae7c">
+
+You can edit your previous commit message with `git commit --amend`!
+
 ## Resources
 
 - [Setting your commit email address](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-email-preferences/setting-your-commit-email-address)
