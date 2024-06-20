@@ -102,7 +102,11 @@ func cli() error {
 		return fmt.Errorf("could not unmarshal: %w", err)
 	}
 
-	data := graphqlResponse["data"].(map[string]interface{})
+	data, ok := graphqlResponse["data"].(map[string]interface{})
+
+	if !ok {
+		return fmt.Errorf("could not parse response.\n\nyou may need to add the appropriate scopes to your token.\ntry running the following:\n\tgh auth refresh --scopes user:email,read:user")
+	}
 
 	for _, user := range data {
 		if user == nil {
