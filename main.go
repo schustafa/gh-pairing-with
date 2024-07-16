@@ -51,6 +51,8 @@ Usage:
 	}
 }
 
+// generateQuery accepts an array of usernames and returns a
+// map[string]interface{} suitable for marshalling to JSON for a GraphQL query.
 func generateQuery(usernames []string) map[string]interface{} {
 	userQuery := fgql.NewQuery()
 
