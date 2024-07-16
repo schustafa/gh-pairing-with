@@ -21,12 +21,12 @@ type User struct {
 }
 
 func (user User) coAuthoredBy() string {
-	coauthoredName := fmt.Sprintf("%s", user.Name)
+	coauthoredName := user.Name
 	if coauthoredName == "" {
 		coauthoredName = user.Login
 	}
 
-	coauthoredEmail := fmt.Sprintf("%s", user.Email)
+	coauthoredEmail := user.Email
 	if coauthoredEmail == "" {
 		coauthoredEmail = fmt.Sprintf("%d+%s@users.noreply.github.com", user.DatabaseID, user.Login)
 	}
@@ -51,10 +51,12 @@ Usage:
 	}
 }
 
-func cli() error {
+// generateQuery accepts an array of usernames and returns a
+// map[string]interface{} suitable for marshalling to JSON for a GraphQL query.
+func generateQuery(usernames []string) map[string]interface{} {
 	userQuery := fgql.NewQuery()
 
-	for i, login := range flag.Args() {
+	for i, login := range usernames {
 		userQuery.Selection(
 			"user",
 			fgql.WithAlias(fmt.Sprintf("user_%d", i)),
@@ -71,6 +73,14 @@ func cli() error {
 	body := map[string]interface{}{
 		"query": userQuery.Root().String(),
 	}
+
+	return body
+}
+
+func cli() error {
+	handles := flag.Args()
+
+	body := generateQuery(handles)
 
 	b, err := json.Marshal(body)
 	if err != nil {
@@ -117,7 +127,7 @@ func cli() error {
 		userJson, _ := json.Marshal(user)
 		json.Unmarshal(userJson, &userData)
 
-		fmt.Printf(userData.coAuthoredBy())
+		fmt.Print(userData.coAuthoredBy())
 	}
 
 	return nil
