@@ -51,10 +51,10 @@ Usage:
 	}
 }
 
-func cli() error {
+func generateQuery(usernames []string) map[string]interface{} {
 	userQuery := fgql.NewQuery()
 
-	for i, login := range flag.Args() {
+	for i, login := range usernames {
 		userQuery.Selection(
 			"user",
 			fgql.WithAlias(fmt.Sprintf("user_%d", i)),
@@ -71,6 +71,14 @@ func cli() error {
 	body := map[string]interface{}{
 		"query": userQuery.Root().String(),
 	}
+
+	return body
+}
+
+func cli() error {
+	handles := flag.Args()
+
+	body := generateQuery(handles)
 
 	b, err := json.Marshal(body)
 	if err != nil {
