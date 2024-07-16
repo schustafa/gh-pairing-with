@@ -21,12 +21,12 @@ type User struct {
 }
 
 func (user User) coAuthoredBy() string {
-	coauthoredName := fmt.Sprintf("%s", user.Name)
+	coauthoredName := user.Name
 	if coauthoredName == "" {
 		coauthoredName = user.Login
 	}
 
-	coauthoredEmail := fmt.Sprintf("%s", user.Email)
+	coauthoredEmail := user.Email
 	if coauthoredEmail == "" {
 		coauthoredEmail = fmt.Sprintf("%d+%s@users.noreply.github.com", user.DatabaseID, user.Login)
 	}
@@ -127,7 +127,7 @@ func cli() error {
 		userJson, _ := json.Marshal(user)
 		json.Unmarshal(userJson, &userData)
 
-		fmt.Printf(userData.coAuthoredBy())
+		fmt.Print(userData.coAuthoredBy())
 	}
 
 	return nil
