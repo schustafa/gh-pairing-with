@@ -8,8 +8,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/cli/go-gh/v2/pkg/auth"
+	mapset "github.com/deckarep/golang-set/v2"
 	fgql "github.com/mergestat/fluentgraphql"
 )
 
@@ -77,6 +79,17 @@ func generateQuery(usernames []string) map[string]interface{} {
 	return body
 }
 
+// missingTokenScopes returns a set of scopes that are required but not present
+// in the passed string value of the X-OAuth-Scopes header.
+func missingTokenScopes(scopesHeader string) mapset.Set[string] {
+	requiredScopes := mapset.NewSet[string]("user:email", "read:user")
+	scopesHeader = strings.ReplaceAll(scopesHeader, " ", "")
+
+	tokenScopes := mapset.NewSet[string](strings.Split(scopesHeader, ",")...)
+
+	return requiredScopes.Difference(tokenScopes)
+}
+
 func cli() error {
 	// Parse handles from command-line arguments and generate a request body
 	handles := flag.Args()
@@ -120,8 +133,16 @@ func cli() error {
 
 	data, ok := graphqlResponse["data"].(map[string]interface{})
 
+	// If the response body does not contain a "data" key, the token may be
+	// missing required scopes
 	if !ok {
-		return fmt.Errorf("could not parse response.\n\nyou may need to add the appropriate scopes to your token.\ntry running the following:\n\tgh auth refresh --scopes user:email,read:user")
+		missingScopes := missingTokenScopes(res.Header.Get("X-OAuth-Scopes"))
+
+		if missingScopes.Cardinality() > 0 {
+			return fmt.Errorf("your token is missing required scopes. try running the following:\n\tgh auth refresh --scopes %s", strings.Join(missingScopes.ToSlice(), ","))
+		}
+
+		return fmt.Errorf("could not parse response")
 	}
 
 	// Print a co-authored-by line for each user in the returned data set
