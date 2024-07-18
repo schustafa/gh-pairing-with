@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,4 +74,28 @@ func TestCoAuthoredByWithEmailAndName(t *testing.T) {
 
 	expectedCoAuthoredBy := "Co-authored-by: Miss Mona Lisa Octocat <monalisa@github.com>\n"
 	assert.Equal(t, expectedCoAuthoredBy, user.coAuthoredBy())
+}
+
+func TestMissingScopes(t *testing.T) {
+	scopesHeader := ""
+	expectedMissingScopes := mapset.NewSet("user:email", "read:user")
+	assert.Equal(t, expectedMissingScopes, missingTokenScopes(scopesHeader))
+}
+
+func TestMissingScopesOnlyWhitespace(t *testing.T) {
+	scopesHeader := "      "
+	expectedMissingScopes := mapset.NewSet("user:email", "read:user")
+	assert.Equal(t, expectedMissingScopes, missingTokenScopes(scopesHeader))
+}
+
+func TestMissingScopesWithAllScopes(t *testing.T) {
+	scopesHeader := " codespace, gist, read:org, read:user, repo, user:email, workflow "
+	expectedMissingScopes := mapset.NewSet[string]()
+	assert.Equal(t, expectedMissingScopes, missingTokenScopes(scopesHeader))
+}
+
+func TestMissingScopesMissingOneScope(t *testing.T) {
+	scopesHeader := " codespace, gist, read:org, repo, user:email, workflow "
+	expectedMissingScopes := mapset.NewSet("read:user")
+	assert.Equal(t, expectedMissingScopes, missingTokenScopes(scopesHeader))
 }
