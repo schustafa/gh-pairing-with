@@ -82,6 +82,12 @@ func TestMissingScopes(t *testing.T) {
 	assert.Equal(t, expectedMissingScopes, missingTokenScopes(scopesHeader))
 }
 
+func TestMissingScopesOnlyWhitespace(t *testing.T) {
+	scopesHeader := "      "
+	expectedMissingScopes := mapset.NewSet("user:email", "read:user")
+	assert.Equal(t, expectedMissingScopes, missingTokenScopes(scopesHeader))
+}
+
 func TestMissingScopesWithAllScopes(t *testing.T) {
 	scopesHeader := " codespace, gist, read:org, read:user, repo, user:email, workflow "
 	expectedMissingScopes := mapset.NewSet[string]()
