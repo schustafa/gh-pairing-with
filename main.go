@@ -53,6 +53,16 @@ Usage:
 	}
 }
 
+func cli() error {
+	handles := flag.Args()
+
+	if err := lookupAndPrintForHandles(handles); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // generateQuery accepts an array of usernames and returns a
 // map[string]interface{} suitable for marshalling to JSON for a GraphQL query.
 func generateQuery(usernames []string) map[string]interface{} {
@@ -90,9 +100,8 @@ func missingTokenScopes(scopesHeader string) mapset.Set[string] {
 	return requiredScopes.Difference(tokenScopes)
 }
 
-func cli() error {
-	// Parse handles from command-line arguments and generate a request body
-	handles := flag.Args()
+func lookupAndPrintForHandles(handles []string) error {
+	// generate a request body for the handles
 	body := generateQuery(handles)
 
 	// Marshal the request body to JSON; return and print error if that fails
