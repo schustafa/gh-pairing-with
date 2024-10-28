@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.2
 
 require (
-	github.com/cli/go-gh/v2 v2.9.0
+	github.com/cli/go-gh/v2 v2.11.0
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/mergestat/fluentgraphql v0.0.0-20220506205554-9162f392519f
 	github.com/stretchr/testify v1.7.0
