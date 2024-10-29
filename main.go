@@ -37,16 +37,6 @@ func (user User) coAuthoredBy() string {
 }
 
 func main() {
-	flag.Parse()
-
-	if len(flag.Args()) < 1 {
-		fmt.Printf(`
-Usage:
-  pairing-with <github_login>...
-`)
-		return
-	}
-
 	if err := cli(); err != nil {
 		fmt.Fprintf(os.Stderr, "gh-pairing-with failed: %s\n", err.Error())
 		os.Exit(1)
@@ -54,11 +44,34 @@ Usage:
 }
 
 func cli() error {
+	var aliasFlag string
+	flag.StringVar(&aliasFlag, "alias", "", "alias for a handle or set of handles")
+
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
+		fmt.Printf(`
+	Usage:
+	  pairing-with <github_login>...
+`)
+		return nil
+	}
+
 	handles := flag.Args()
 
-	if err := lookupAndPrintForHandles(handles); err != nil {
+	if aliasFlag != "" {
+		if err := storeAliasForHandles(aliasFlag, handles); err != nil {
+			return err
+		}
+	} else if err := lookupAndPrintForHandles(handles); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func storeAliasForHandles(alias string, handles []string) error {
+	fmt.Printf("storing alias %s for handles %v\n", alias, handles)
 
 	return nil
 }
