@@ -13,6 +13,7 @@ import (
 	"github.com/cli/go-gh/v2/pkg/auth"
 	mapset "github.com/deckarep/golang-set/v2"
 	fgql "github.com/mergestat/fluentgraphql"
+	"gopkg.in/yaml.v3"
 )
 
 type User struct {
@@ -36,6 +37,30 @@ func (user User) coAuthoredBy() string {
 	return fmt.Sprintf("Co-authored-by: %s <%s>\n", coauthoredName, coauthoredEmail)
 }
 
+type Config struct {
+	Aliases map[string][]string
+}
+
+// func loadConfig() (*Config, error) {
+// 	// look for a config file
+// 	// if it doesn't exist, create a file and return an empty version
+
+// 	// otherwise, return the unmarshaled contents
+// }
+
+// gh pairing-with schustafa
+// gh pairing-with schustafa stephanieg0
+// gh pairing-with --alias buddies schustafa stephanieg0
+// gh pairing-with --alias kiran krhkt
+// gh pairing-with buddies
+// gh pairing-with --alias buddies
+// gh pairing-with --list-aliases
+// gh pairing-with --delete-alias buddies
+
+// LATER:
+// gh pairing-with --start buddies
+// gh pairing-with --stop
+
 func main() {
 	if err := cli(); err != nil {
 		fmt.Fprintf(os.Stderr, "gh-pairing-with failed: %s\n", err.Error())
@@ -44,6 +69,8 @@ func main() {
 }
 
 func cli() error {
+	// cfg, err := loadConfig()
+
 	var aliasFlag string
 	flag.StringVar(&aliasFlag, "alias", "", "alias for a handle or set of handles")
 
@@ -70,8 +97,63 @@ func cli() error {
 	return nil
 }
 
+func getAlias(alias string) ([]string, error) {
+	fmt.Printf("getting alias %s\n", alias)
+
+	var config Config
+
+	existingFile, err := os.ReadFile("config.yml")
+	if err != nil {
+		return nil, fmt.Errorf("could not find file: %w", err)
+	}
+
+	err = yaml.Unmarshal(existingFile, &config)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal yaml: %w", err)
+	}
+
+	return config.Aliases[alias], nil
+}
+
 func storeAliasForHandles(alias string, handles []string) error {
 	fmt.Printf("storing alias %s for handles %v\n", alias, handles)
+
+	var config Config
+
+	existingFile, err := os.ReadFile("config.yml")
+	if err != nil {
+		return fmt.Errorf("could not find file: %w", err)
+	}
+
+	err = yaml.Unmarshal(existingFile, &config)
+	if err != nil {
+		return fmt.Errorf("could not unmarshal yaml: %w", err)
+	}
+
+	config.Aliases[alias] = handles
+
+	// Config := Config{
+	// 	Aliases: map[string][]string{
+	// 		alias: handles,
+	// 	},
+	// }
+
+	updatedFile, err := yaml.Marshal(&config)
+	if err != nil {
+		return fmt.Errorf("could not marshal yaml: %w", err)
+	}
+
+	f, err := os.Create("config.yml")
+	if err != nil {
+		return fmt.Errorf("could not create file: %w", err)
+	}
+
+	defer f.Close()
+
+	_, err = io.Writer.Write(f, updatedFile)
+	if err != nil {
+		return fmt.Errorf("could not write to config file: %w", err)
+	}
 
 	return nil
 }
@@ -114,8 +196,24 @@ func missingTokenScopes(scopesHeader string) mapset.Set[string] {
 }
 
 func lookupAndPrintForHandles(handles []string) error {
+	var aliasedHandles []string
+	var handlesForQuery []string
+
+	var err error
+	// TODO: handle the case where multiple aliases/handles are passed
+	aliasedHandles, err = getAlias(handles[0])
+	if err != nil {
+		return fmt.Errorf("error getting alias: %w", err)
+	} else {
+		if len(aliasedHandles) > 0 {
+			handlesForQuery = aliasedHandles
+		} else {
+			handlesForQuery = handles
+		}
+	}
+
 	// generate a request body for the handles
-	body := generateQuery(handles)
+	body := generateQuery(handlesForQuery)
 
 	// Marshal the request body to JSON; return and print error if that fails
 	b, err := json.Marshal(body)
