@@ -53,6 +53,29 @@ Co-authored-by: Monalisa Octocat <92997159+mona@users.noreply.github.com>
 Co-authored-by: AJ Schuster <126731+schustafa@users.noreply.github.com>
 ```
 
+## Aliases
+
+Do you regularly work with more than one collaborator at a time? Or do you work with a collaborator with a hard-to-type or hard-to-remember username? Create an alias!
+
+```bash
+> gh pairing-with --alias buddies schustafa mona
+
+> gh pairing-with buddies
+Co-authored-by: Monalisa Octocat <92997159+mona@users.noreply.github.com>
+Co-authored-by: AJ Schuster <126731+schustafa@users.noreply.github.com>
+```
+
+Any aliases you pass will be expanded alongside other handles as well:
+
+```bash
+> gh pairing-with buddies abigailychen
+Co-authored-by: Monalisa Octocat <92997159+mona@users.noreply.github.com>
+Co-authored-by: AJ Schuster <126731+schustafa@users.noreply.github.com>
+Co-authored-by: Abigail Chen <6415144+abigailychen@users.noreply.github.com>
+```
+
+N.B. Your aliases have a higher priority than “actual” handles, so don’t create an alias with the name of an actual user you collaborate with.
+
 ## Troubleshooting
 
 ### Scopes
