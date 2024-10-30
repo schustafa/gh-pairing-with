@@ -13,6 +13,33 @@ type Config struct {
 	Aliases map[string][]string
 }
 
+func (c *Config) AddAliasForHandles(alias string, handles []string) error {
+	c.Aliases[alias] = handles
+
+	configFilePath, err := getConfigFilePath()
+	if err != nil {
+		return err
+	}
+
+	updatedFile, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(configFilePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = io.Writer.Write(f, updatedFile)
+	if err != nil {
+		return fmt.Errorf("could not write to config file: %w", err)
+	}
+
+	return nil
+}
+
 func createConfigFileIfMissing(configFilePath string) error {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		newConfigFile, err := os.OpenFile(
@@ -94,29 +121,4 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &config, nil
-}
-
-func (c *Config) Save() error {
-	configFilePath, err := getConfigFilePath()
-	if err != nil {
-		return err
-	}
-
-	updatedFile, err := yaml.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(configFilePath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = io.Writer.Write(f, updatedFile)
-	if err != nil {
-		return fmt.Errorf("could not write to config file: %w", err)
-	}
-
-	return nil
 }

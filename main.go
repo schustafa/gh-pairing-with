@@ -80,7 +80,7 @@ func cli() error {
 	handles := flag.Args()
 
 	if aliasFlag != "" {
-		if err := storeAliasForHandles(cfg, aliasFlag, handles); err != nil {
+		if err := cfg.AddAliasForHandles(aliasFlag, handles); err != nil {
 			return err
 		}
 	} else if err := lookupAndPrintForHandles(handles); err != nil {
@@ -97,16 +97,6 @@ func getAlias(alias string) ([]string, error) {
 	}
 
 	return cfg.Aliases[alias], nil
-}
-
-func storeAliasForHandles(config *config.Config, alias string, handles []string) error {
-	fmt.Printf("storing alias %s for handles %v\n", alias, handles)
-
-	config.Aliases[alias] = handles
-
-	config.Save()
-
-	return nil
 }
 
 // generateQuery accepts an array of usernames and returns a
