@@ -77,26 +77,23 @@ func cli() error {
 		return nil
 	}
 
-	handles := flag.Args()
+	rawHandles := flag.Args()
 
 	if aliasFlag != "" {
-		if err := cfg.AddAliasForHandles(aliasFlag, handles); err != nil {
+		if err := cfg.AddAliasForHandles(aliasFlag, rawHandles); err != nil {
 			return err
 		}
-	} else if err := lookupAndPrintForHandles(handles); err != nil {
+
+		return nil
+	}
+
+	expandedHandles := cfg.ExpandHandles(rawHandles)
+
+	if err := lookupAndPrintForHandles(expandedHandles); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func getAlias(alias string) ([]string, error) {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	return cfg.Aliases[alias], nil
 }
 
 // generateQuery accepts an array of usernames and returns a
@@ -137,24 +134,8 @@ func missingTokenScopes(scopesHeader string) mapset.Set[string] {
 }
 
 func lookupAndPrintForHandles(handles []string) error {
-	var aliasedHandles []string
-	var handlesForQuery []string
-
-	var err error
-	// TODO: handle the case where multiple aliases/handles are passed
-	aliasedHandles, err = getAlias(handles[0])
-	if err != nil {
-		return fmt.Errorf("error getting alias: %w", err)
-	} else {
-		if len(aliasedHandles) > 0 {
-			handlesForQuery = aliasedHandles
-		} else {
-			handlesForQuery = handles
-		}
-	}
-
 	// generate a request body for the handles
-	body := generateQuery(handlesForQuery)
+	body := generateQuery(handles)
 
 	// Marshal the request body to JSON; return and print error if that fails
 	b, err := json.Marshal(body)

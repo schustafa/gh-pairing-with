@@ -14,6 +14,13 @@ type Config struct {
 }
 
 func (c *Config) AddAliasForHandles(alias string, handles []string) error {
+	// if handles includes the alias literal, return an error
+	for _, handle := range handles {
+		if handle == alias {
+			return fmt.Errorf("an alias cannot reference itself")
+		}
+	}
+
 	c.Aliases[alias] = handles
 
 	configFilePath, err := getConfigFilePath()
@@ -38,6 +45,20 @@ func (c *Config) AddAliasForHandles(alias string, handles []string) error {
 	}
 
 	return nil
+}
+
+func (c *Config) ExpandHandles(handles []string) []string {
+	var expandedHandles []string
+
+	for _, handle := range handles {
+		if alias, ok := c.Aliases[handle]; ok {
+			expandedHandles = append(expandedHandles, alias...)
+		} else {
+			expandedHandles = append(expandedHandles, handle)
+		}
+	}
+
+	return expandedHandles
 }
 
 func createConfigFileIfMissing(configFilePath string) error {
