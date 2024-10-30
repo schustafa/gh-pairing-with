@@ -8,13 +8,13 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cli/go-gh/v2/pkg/auth"
 	mapset "github.com/deckarep/golang-set/v2"
 	fgql "github.com/mergestat/fluentgraphql"
-	"gopkg.in/yaml.v3"
+
+	"github.com/schustafa/gh-pairing-with/config"
 )
 
 type User struct {
@@ -38,118 +38,6 @@ func (user User) coAuthoredBy() string {
 	return fmt.Sprintf("Co-authored-by: %s <%s>\n", coauthoredName, coauthoredEmail)
 }
 
-type Config struct {
-	Aliases map[string][]string
-}
-
-func createConfigFileIfMissing(configFilePath string) error {
-	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		newConfigFile, err := os.OpenFile(
-			configFilePath,
-			os.O_RDWR|os.O_CREATE|os.O_EXCL,
-			0666,
-		)
-		if err != nil {
-			return err
-		}
-
-		var emptyConfig Config
-		emptyConfig.Aliases = make(map[string][]string)
-
-		blankConfigFile, err := yaml.Marshal(emptyConfig)
-		if err != nil {
-			return err
-		}
-
-		_, err = io.Writer.Write(newConfigFile, blankConfigFile)
-		if err != nil {
-			return err
-		}
-
-		defer newConfigFile.Close()
-		return nil
-	}
-
-	return nil
-}
-
-func getConfigFilePath() (string, error) {
-	const PairingWithDir = "gh-pairing-with"
-	const ConfigYmlFileName = "config.yml"
-	const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
-
-	configDir := os.Getenv("XDG_CONFIG_HOME")
-
-	if configDir == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		configDir = filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME)
-	}
-
-	pairingWithConfigDir := filepath.Join(configDir, PairingWithDir)
-	return filepath.Join(pairingWithConfigDir, ConfigYmlFileName), nil
-}
-
-func loadConfig() (*Config, error) {
-	var config Config
-
-	configFilePath, err := getConfigFilePath()
-
-	if err != nil {
-		return nil, err
-	}
-
-	configDir := filepath.Dir(configFilePath)
-	if _, err := os.Stat(configDir); os.IsNotExist(err) {
-		if err = os.MkdirAll(configDir, os.ModePerm); err != nil {
-			return &config, err
-		}
-	}
-
-	if err := createConfigFileIfMissing(configFilePath); err != nil {
-		return &config, err
-	}
-
-	existingFile, err := os.ReadFile(configFilePath)
-	if err != nil {
-		return &config, err
-	}
-
-	err = yaml.Unmarshal(existingFile, &config)
-	if err != nil {
-		return &config, err
-	}
-
-	return &config, nil
-}
-
-func (c *Config) save() error {
-	configFilePath, err := getConfigFilePath()
-	if err != nil {
-		return err
-	}
-
-	updatedFile, err := yaml.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(configFilePath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = io.Writer.Write(f, updatedFile)
-	if err != nil {
-		return fmt.Errorf("could not write to config file: %w", err)
-	}
-
-	return nil
-}
-
 // gh pairing-with schustafa
 // gh pairing-with schustafa stephanieg0
 // gh pairing-with --alias buddies schustafa stephanieg0
@@ -171,7 +59,7 @@ func main() {
 }
 
 func cli() error {
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
@@ -203,29 +91,20 @@ func cli() error {
 }
 
 func getAlias(alias string) ([]string, error) {
-	fmt.Printf("getting alias %s\n", alias)
-
-	var config Config
-
-	existingFile, err := os.ReadFile("config.yml")
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		return nil, fmt.Errorf("could not find file: %w", err)
+		return nil, err
 	}
 
-	err = yaml.Unmarshal(existingFile, &config)
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal yaml: %w", err)
-	}
-
-	return config.Aliases[alias], nil
+	return cfg.Aliases[alias], nil
 }
 
-func storeAliasForHandles(config *Config, alias string, handles []string) error {
+func storeAliasForHandles(config *config.Config, alias string, handles []string) error {
 	fmt.Printf("storing alias %s for handles %v\n", alias, handles)
 
 	config.Aliases[alias] = handles
 
-	config.save()
+	config.Save()
 
 	return nil
 }
