@@ -65,6 +65,12 @@ func (c *Config) GetAllAliases() map[string][]string {
 	return c.Aliases
 }
 
+func getDefaultConfig() Config {
+	return Config{
+		Aliases: make(map[string][]string),
+	}
+}
+
 func createConfigFileIfMissing(configFilePath string) error {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		newConfigFile, err := os.OpenFile(
@@ -76,10 +82,7 @@ func createConfigFileIfMissing(configFilePath string) error {
 			return err
 		}
 
-		var emptyConfig Config
-		emptyConfig.Aliases = make(map[string][]string)
-
-		blankConfigFile, err := yaml.Marshal(emptyConfig)
+		blankConfigFile, err := yaml.Marshal(getDefaultConfig())
 		if err != nil {
 			return err
 		}
