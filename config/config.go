@@ -61,6 +61,10 @@ func (c *Config) ExpandHandles(handles []string) []string {
 	return expandedHandles
 }
 
+func (c *Config) GetAllAliases() map[string][]string {
+	return c.Aliases
+}
+
 func createConfigFileIfMissing(configFilePath string) error {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		newConfigFile, err := os.OpenFile(

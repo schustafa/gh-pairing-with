@@ -66,16 +66,9 @@ func cli() error {
 
 	var aliasFlag string
 	flag.StringVar(&aliasFlag, "alias", "", "alias for a handle or set of handles")
+	listAliasesFlag := flag.Bool("list-aliases", false, "list all aliases")
 
 	flag.Parse()
-
-	if len(flag.Args()) < 1 {
-		fmt.Printf(`
-	Usage:
-	  pairing-with <github_login>...
-`)
-		return nil
-	}
 
 	rawHandles := flag.Args()
 
@@ -84,6 +77,23 @@ func cli() error {
 			return err
 		}
 
+		return nil
+	}
+
+	if *listAliasesFlag {
+		aliases := cfg.GetAllAliases()
+		for alias, handles := range aliases {
+			fmt.Printf("%s: %v\n", alias, strings.Join(handles, " "))
+		}
+
+		return nil
+	}
+
+	if len(rawHandles) < 1 {
+		fmt.Printf(`
+	Usage:
+	  pairing-with <github_login>...
+`)
 		return nil
 	}
 
