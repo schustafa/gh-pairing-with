@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -13,6 +14,8 @@ import (
 	"github.com/cli/go-gh/v2/pkg/auth"
 	mapset "github.com/deckarep/golang-set/v2"
 	fgql "github.com/mergestat/fluentgraphql"
+
+	"github.com/schustafa/gh-pairing-with/config"
 )
 
 type User struct {
@@ -37,20 +40,88 @@ func (user User) coAuthoredBy() string {
 }
 
 func main() {
-	flag.Parse()
-
-	if len(flag.Args()) < 1 {
-		fmt.Printf(`
-Usage:
-  pairing-with <github_login>...
-`)
-		return
-	}
-
 	if err := cli(); err != nil {
 		fmt.Fprintf(os.Stderr, "gh-pairing-with failed: %s\n", err.Error())
 		os.Exit(1)
 	}
+}
+
+func cli() error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	var aliasFlag string
+	var deleteAliasFlag string
+	flag.StringVar(&aliasFlag, "alias", "", "alias for a handle or set of handles")
+	flag.StringVar(&deleteAliasFlag, "delete-alias", "", "delete a specified alias")
+	listAliasesFlag := flag.Bool("list-aliases", false, "list all aliases")
+
+	flag.Parse()
+
+	rawHandles := flag.Args()
+
+	if aliasFlag != "" {
+		if err := cfg.AddAliasForHandles(aliasFlag, rawHandles); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	if deleteAliasFlag != "" {
+		aliasExists := cfg.AliasExists(deleteAliasFlag)
+
+		if !aliasExists {
+			// Alias is already gone, just be quiet
+			return nil
+		}
+
+		reader := bufio.NewReader(os.Stdin)
+
+		fmt.Printf("delete alias %s? [y/n] ", deleteAliasFlag)
+
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("could not read: %w", err)
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		if response == "y" || response == "yes" {
+			if err := cfg.DeleteAlias(deleteAliasFlag); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	if *listAliasesFlag {
+		aliases := cfg.GetAllAliases()
+		for alias, handles := range aliases {
+			fmt.Printf("%s: %v\n", alias, strings.Join(handles, " "))
+		}
+
+		return nil
+	}
+
+	if len(rawHandles) < 1 {
+		fmt.Printf(`
+	Usage:
+	  pairing-with <github_login>...
+`)
+		return nil
+	}
+
+	expandedHandles := cfg.ExpandHandles(rawHandles)
+
+	if err := lookupAndPrintForHandles(expandedHandles); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // generateQuery accepts an array of usernames and returns a
@@ -90,9 +161,8 @@ func missingTokenScopes(scopesHeader string) mapset.Set[string] {
 	return requiredScopes.Difference(tokenScopes)
 }
 
-func cli() error {
-	// Parse handles from command-line arguments and generate a request body
-	handles := flag.Args()
+func lookupAndPrintForHandles(handles []string) error {
+	// generate a request body for the handles
 	body := generateQuery(handles)
 
 	// Marshal the request body to JSON; return and print error if that fails
