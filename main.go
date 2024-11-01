@@ -39,19 +39,6 @@ func (user User) coAuthoredBy() string {
 	return fmt.Sprintf("Co-authored-by: %s <%s>\n", coauthoredName, coauthoredEmail)
 }
 
-// gh pairing-with schustafa
-// gh pairing-with schustafa stephanieg0
-// gh pairing-with --alias buddies schustafa stephanieg0
-// gh pairing-with --alias kiran krhkt
-// gh pairing-with buddies
-// gh pairing-with --alias buddies
-// gh pairing-with --list-aliases
-// gh pairing-with --delete-alias buddies
-
-// LATER:
-// gh pairing-with --start buddies
-// gh pairing-with --stop
-
 func main() {
 	if err := cli(); err != nil {
 		fmt.Fprintf(os.Stderr, "gh-pairing-with failed: %s\n", err.Error())
