@@ -24,25 +24,9 @@ func (c *Config) AddAliasForHandles(alias string, handles []string) error {
 
 	c.Aliases[alias] = handles
 
-	configFilePath, err := getConfigFilePath()
+	err := c.persist()
 	if err != nil {
-		return err
-	}
-
-	updatedFile, err := yaml.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(configFilePath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = io.Writer.Write(f, updatedFile)
-	if err != nil {
-		return fmt.Errorf("could not write to config file: %w", err)
+		return fmt.Errorf("error persisting config: %w", err)
 	}
 
 	return nil
@@ -72,6 +56,19 @@ func (c *Config) AliasExists(alias string) bool {
 func (c *Config) DeleteAlias(alias string) error {
 	delete(c.Aliases, alias)
 
+	err := c.persist()
+	if err != nil {
+		return fmt.Errorf("error persisting config: %w", err)
+	}
+
+	return nil
+}
+
+func (c *Config) GetAllAliases() map[string][]string {
+	return c.Aliases
+}
+
+func (c *Config) persist() error {
 	configFilePath, err := getConfigFilePath()
 	if err != nil {
 		return err
@@ -90,14 +87,10 @@ func (c *Config) DeleteAlias(alias string) error {
 
 	_, err = io.Writer.Write(f, updatedFile)
 	if err != nil {
-		return fmt.Errorf("could not write to config file: %w", err)
+		return err
 	}
 
 	return nil
-}
-
-func (c *Config) GetAllAliases() map[string][]string {
-	return c.Aliases
 }
 
 func getDefaultConfig() Config {
