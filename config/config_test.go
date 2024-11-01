@@ -19,6 +19,51 @@ func TestGetDefaultConfig(t *testing.T) {
 	assert.ElementsMatch(t, expectedConfig.Aliases, defaultConfig.Aliases)
 }
 
+func TestGetAllAliases(t *testing.T) {
+	config := Config{
+		Aliases: map[string][]string{
+			"alias1": {"user1", "user2"},
+			"alias2": {"user3", "user4"},
+			"alias3": {"user5", "user6"},
+		},
+	}
+
+	assert.Equal(t,
+		config.Aliases,
+		config.GetAllAliases(),
+	)
+}
+
+func TestExpandHandles(t *testing.T) {
+	config := Config{
+		Aliases: map[string][]string{
+			"alias1": {"user1", "user2"},
+			"alias2": {"user3", "user4"},
+			"alias3": {"user5", "user6"},
+		},
+	}
+
+	var handles []string
+
+	handles = []string{"alias1", "alias2", "user5"}
+	assert.ElementsMatch(t,
+		[]string{"user1", "user2", "user3", "user4", "user5"},
+		config.ExpandHandles(handles),
+	)
+
+	handles = []string{"user9"}
+	assert.ElementsMatch(t,
+		[]string{"user9"},
+		config.ExpandHandles(handles),
+	)
+
+	handles = []string{"alias1", "user1"}
+	assert.ElementsMatch(t,
+		[]string{"user1", "user2"},
+		config.ExpandHandles(handles),
+	)
+}
+
 func TestGetConfigFilePath(t *testing.T) {
 	expectedDir := "/tmp/test-config"
 	t.Setenv("XDG_CONFIG_HOME", expectedDir)

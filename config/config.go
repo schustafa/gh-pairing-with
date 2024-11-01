@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"gopkg.in/yaml.v3"
 )
@@ -58,7 +59,9 @@ func (c *Config) ExpandHandles(handles []string) []string {
 		}
 	}
 
-	return expandedHandles
+	slices.Sort(expandedHandles)
+
+	return slices.Compact(expandedHandles)
 }
 
 func (c *Config) GetAllAliases() map[string][]string {
