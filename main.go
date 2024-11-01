@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"flag"
@@ -65,7 +66,9 @@ func cli() error {
 	}
 
 	var aliasFlag string
+	var deleteAliasFlag string
 	flag.StringVar(&aliasFlag, "alias", "", "alias for a handle or set of handles")
+	flag.StringVar(&deleteAliasFlag, "delete-alias", "", "delete a specified alias")
 	listAliasesFlag := flag.Bool("list-aliases", false, "list all aliases")
 
 	flag.Parse()
@@ -75,6 +78,34 @@ func cli() error {
 	if aliasFlag != "" {
 		if err := cfg.AddAliasForHandles(aliasFlag, rawHandles); err != nil {
 			return err
+		}
+
+		return nil
+	}
+
+	if deleteAliasFlag != "" {
+		aliasExists := cfg.AliasExists(deleteAliasFlag)
+
+		if !aliasExists {
+			// Alias is already gone, just be quiet
+			return nil
+		}
+
+		reader := bufio.NewReader(os.Stdin)
+
+		fmt.Printf("delete alias %s? [y/n] ", deleteAliasFlag)
+
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("could not read: %w", err)
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		if response == "y" || response == "yes" {
+			if err := cfg.DeleteAlias(deleteAliasFlag); err != nil {
+				return err
+			}
 		}
 
 		return nil

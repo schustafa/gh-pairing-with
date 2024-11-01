@@ -19,6 +19,21 @@ func TestGetDefaultConfig(t *testing.T) {
 	assert.ElementsMatch(t, expectedConfig.Aliases, defaultConfig.Aliases)
 }
 
+func TestAliasExists(t *testing.T) {
+	config := Config{
+		Aliases: map[string][]string{
+			"alias1": {"user1", "user2"},
+			"alias2": {"user3", "user4"},
+			"alias3": {"user5", "user6"},
+		},
+	}
+
+	assert.True(t, config.AliasExists("alias1"))
+	assert.True(t, config.AliasExists("alias2"))
+	assert.True(t, config.AliasExists("alias3"))
+	assert.False(t, config.AliasExists("alias4"))
+}
+
 func TestGetAllAliases(t *testing.T) {
 	config := Config{
 		Aliases: map[string][]string{

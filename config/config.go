@@ -64,6 +64,38 @@ func (c *Config) ExpandHandles(handles []string) []string {
 	return slices.Compact(expandedHandles)
 }
 
+func (c *Config) AliasExists(alias string) bool {
+	_, ok := c.Aliases[alias]
+	return ok
+}
+
+func (c *Config) DeleteAlias(alias string) error {
+	delete(c.Aliases, alias)
+
+	configFilePath, err := getConfigFilePath()
+	if err != nil {
+		return err
+	}
+
+	updatedFile, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(configFilePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = io.Writer.Write(f, updatedFile)
+	if err != nil {
+		return fmt.Errorf("could not write to config file: %w", err)
+	}
+
+	return nil
+}
+
 func (c *Config) GetAllAliases() map[string][]string {
 	return c.Aliases
 }
