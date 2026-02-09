@@ -236,8 +236,13 @@ func parseUsersFromData(data map[string]interface{}) []User {
 		}
 
 		var userData User
-		userJson, _ := json.Marshal(user)
-		json.Unmarshal(userJson, &userData)
+		userJSON, err := json.Marshal(user)
+		if err != nil {
+			continue
+		}
+		if err := json.Unmarshal(userJSON, &userData); err != nil {
+			continue
+		}
 
 		users = append(users, userData)
 	}
