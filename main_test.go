@@ -99,3 +99,43 @@ func TestMissingScopesMissingOneScope(t *testing.T) {
 	expectedMissingScopes := mapset.NewSet("read:user")
 	assert.Equal(t, expectedMissingScopes, missingTokenScopes(scopesHeader))
 }
+
+func TestParseUsersFromData(t *testing.T) {
+	data := map[string]interface{}{
+		"user_0": map[string]interface{}{
+			"name":       "Monalisa Octocat",
+			"login":      "mona",
+			"email":      "",
+			"databaseId": float64(92997159),
+		},
+	}
+
+	users := parseUsersFromData(data)
+	assert.Len(t, users, 1)
+	assert.Equal(t, "mona", users[0].Login)
+	assert.Equal(t, "Monalisa Octocat", users[0].Name)
+	assert.Equal(t, 92997159, users[0].DatabaseID)
+}
+
+func TestParseUsersFromDataSkipsNilEntries(t *testing.T) {
+	data := map[string]interface{}{
+		"user_0": map[string]interface{}{
+			"name":       "Monalisa Octocat",
+			"login":      "mona",
+			"email":      "",
+			"databaseId": float64(92997159),
+		},
+		"user_1": nil,
+	}
+
+	users := parseUsersFromData(data)
+	assert.Len(t, users, 1)
+	assert.Equal(t, "mona", users[0].Login)
+}
+
+func TestParseUsersFromDataEmpty(t *testing.T) {
+	data := map[string]interface{}{}
+
+	users := parseUsersFromData(data)
+	assert.Empty(t, users)
+}
