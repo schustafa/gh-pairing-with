@@ -215,18 +215,37 @@ func lookupAndPrintForHandles(handles []string) error {
 		return fmt.Errorf("could not parse response")
 	}
 
-	// Print a co-authored-by line for each user in the returned data set
+	// Parse user data from the response and print co-authored-by lines
+	users := parseUsersFromData(data)
+
+	for _, user := range users {
+		fmt.Print(user.coAuthoredBy())
+	}
+
+	return nil
+}
+
+// parseUsersFromData takes GraphQL response data and returns a slice of Users,
+// skipping any nil entries (e.g. deleted or suspended accounts).
+func parseUsersFromData(data map[string]interface{}) []User {
+	var users []User
+
 	for _, user := range data {
 		if user == nil {
 			continue
 		}
 
 		var userData User
-		userJson, _ := json.Marshal(user)
-		json.Unmarshal(userJson, &userData)
+		userJSON, err := json.Marshal(user)
+		if err != nil {
+			continue
+		}
+		if err := json.Unmarshal(userJSON, &userData); err != nil {
+			continue
+		}
 
-		fmt.Print(userData.coAuthoredBy())
+		users = append(users, userData)
 	}
 
-	return nil
+	return users
 }
